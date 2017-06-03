@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+    <meta name="robots" content="noindex, nofollow">
+    <meta name="googlebot" content="noindex, nofollow">
+
+    <script type="text/javascript" src="//code.jquery.com/jquery-2.0.2.js"></script>
+    <style type="text/css">
+        @import url('//netdna.bootstrapcdn.com/bootstrap/3.1.0/css/bootstrap.min.css');
+        body {
+            padding: 20px;
+        }
+
+    </style>
+
+    <title>Image to Base64</title>
+</head>
+
+<body>
+<form class="form-horizontal" id="img2b64">
+    <h2>Input</h2>
+    <div class="form-group">
+        <label class="col-sm-2 control-label">Convert via:</label>
+        <div class="col-sm-10">
+            <select class="form-control" name="convertType">
+                <option value="Canvas" selected>Canvas</option>
+                <option value="FileReader">FileReader</option>
+            </select>
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="col-sm-2 control-label">URL:</label>
+        <div class="col-sm-10">
+            <input type="url" name="url" class="form-control" placeholder="Insert an IMAGE-URL" value="http://upload.wikimedia.org/wikipedia/commons/4/4a/Logo_2013_Google.png" required />
+        </div>
+    </div>
+    <div class="form-group">
+        <div class="col-sm-offset-2 col-sm-10">
+            <input type="submit" class="btn btn-default">
+        </div>
+    </div>
+</form>
+
+<div class="output form-horizontal" style="display: none">
+    <hr>
+    <h2>Output</h2>
+    <div>
+        <strong class="col-sm-2 text-right">Converted via:</strong>
+        <div class="col-sm-10">
+            <span class="convertType"></span>
+        </div>
+    </div>
+    <div>
+        <strong class="col-sm-2 text-right">Size:</strong>
+        <div class="col-sm-10">
+            <span class="size"></span>
+        </div>
+    </div>
+    <div>
+        <strong class="col-sm-2 text-right">Text:</strong>
+        <div class="col-sm-10">
+            <textarea class="form-control textbox"></textarea>
+        </div>
+    </div>
+    <div>
+        <strong class="col-sm-2 text-right">Link:</strong>
+        <div class="col-sm-10">
+            <a href="#" class="link">Open image</a>
+        </div>
+    </div>
+    <div>
+        <strong class="col-sm-2 text-right">Image:</strong>
+        <div class="col-sm-10">
+            <img class="img">
+        </div>
+    </div>
+</div>
+
+<script>
+$(function() {
+    function convertImgToDataURLviaCanvas(url, callback, outputFormat) {
+        var img = new Image();
+        img.crossOrigin = 'Anonymous';
+        img.onload = function() {
+            var canvas = document.createElement('CANVAS');
+            var ctx = canvas.getContext('2d');
+            var dataURL;
+            canvas.height = this.height;
+            canvas.width = this.width;
+            ctx.drawImage(this, 0, 0);
+            dataURL = canvas.toDataURL(outputFormat);
+            callback(dataURL);
+            canvas = null;
+        };
+        img.src = url;
+    }
+
+    function convertFileToDataURLviaFileReader(url, callback) {
+        var xhr = new XMLHttpRequest();
+        xhr.onload = function() {
+            var reader = new FileReader();
+            reader.onloadend = function() {
+                callback(reader.result);
+            }
+            reader.readAsDataURL(xhr.response);
+        };
+        xhr.open('GET', url);
+        xhr.responseType = 'blob';
+        xhr.send();
+    }
+
+    $('#img2b64').submit(function(event) {
+        var imageUrl = $(this).find('[name=url]').val();
+        var convertType = $(this).find('[name=convertType]').val();
+        var convertFunction = convertType === 'FileReader' ?
+            convertFileToDataURLviaFileReader :
+            convertImgToDataURLviaCanvas;
+
+        convertFunction(imageUrl, function(base64Img) {
+            $('.output')
+                .find('.textbox')
+                .val(base64Img)
+                .end()
+                .find('.link')
+                .attr('href', base64Img)
+                .end()
+                .find('.img')
+                .attr('src', base64Img)
+                .end()
+                .find('.size')
+                .text(base64Img.length)
+                .end()
+                .find('.convertType')
+                .text(convertType)
+                .end()
+                .show()
+        });
+
+        event.preventDefault();
+    });
+});
+
+</script>
+
+</body>
+
+</html>
+
